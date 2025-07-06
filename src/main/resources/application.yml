@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: authservice
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}
+    username: root
+    password: ${MYSQL_ROOT_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  config:
+    import: optional:file:authservice-dev.env[.properties]
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST}:${KAFKA_PORT}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    topic:
+      name: ${KAFKA_TOPIC}
+
+
+server:
+  port: 9898
+
