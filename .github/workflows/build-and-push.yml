@@ -1,0 +1,68 @@
+name: Build and Push Docker
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Log - Start Build
+        run: echo "========== STARTING BUILD & PUSH WORKFLOW FOR AuthService=========="
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Log - Java Setup Complete
+        run: echo "[INFO] Java setup complete"
+
+      - name: Build Jar
+        run: |
+          set -x
+          echo "[INFO] Running Maven build"
+          mvn clean package -DskipTests
+          echo "[INFO] Maven build complete"
+
+      - name: Configure AWS OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::339495302685:role/github-ecr-role
+          aws-region: ap-south-1
+
+      - name: Log - AWS Credentials Configured
+        run: echo "[INFO] AWS OIDC credentials configured"
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Log - AWS ECR Login Complete
+        run: echo "[INFO] Logged in to AWS ECR"
+
+      - name: Build and Push Docker Image
+        run: |
+          set -x
+          echo "[INFO] Building Docker image"
+          IMAGE_URI=339495302685.dkr.ecr.ap-south-1.amazonaws.com/authservice:latest
+          docker build -t $IMAGE_URI .
+          echo "[INFO] Docker image build complete"
+          echo "[INFO] Pushing Docker image to ECR"
+          docker push $IMAGE_URI
+          echo "[INFO] Docker image pushed to ECR"
+
+      - name: Log - Build & Push Workflow Complete
+        run: echo "========== BUILD & PUSH WORKFLOW COMPLETE =========="
